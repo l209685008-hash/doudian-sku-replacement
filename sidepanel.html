@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>抖店批量替换SKU</title>
+    <link rel="stylesheet" href="sidepanel.css">
+  </head>
+  <body data-panel-mode="update">
+    <div class="panel-shell">
+      <header class="panel-header">
+        <div>
+          <h1>抖店批量替换</h1>
+          <p>已有商品的规格、价格、库存与 SKU 图操作</p>
+        </div>
+      </header>
+      <main class="panel-content">
+        <section class="update-section">
+          <div class="section-heading">
+            <h2 id="updateHeading">批量替换已有商品</h2>
+            <span id="updateStatus" class="status-badge" data-state="idle" role="status" aria-live="polite">等待材料</span>
+          </div>
+          <div class="update-submodes segmented-control" role="tablist" aria-label="替换功能">
+            <button class="segment" type="button" role="tab" aria-selected="false" aria-controls="updateReplacePanel" data-update-submode="replace" tabindex="-1">替换</button>
+            <button class="segment is-selected" type="button" role="tab" aria-selected="true" aria-controls="updateReplacePanel" data-update-submode="wash">洗链接</button>
+            <button class="segment" type="button" role="tab" aria-selected="false" aria-controls="updateOffsalePanel" data-update-submode="offsale" tabindex="-1">下架</button>
+            <button class="segment" type="button" role="tab" aria-selected="false" aria-controls="updateImageSwapPanel" data-update-submode="image-swap" tabindex="-1">换 SKU 图</button>
+          </div>
+
+          <div id="updateReplacePanel" class="update-submode-panel" role="tabpanel">
+            <fieldset class="update-modules" aria-label="可修改模块">
+              <legend>可修改模块</legend>
+              <div class="module-material-row">
+                <label class="module-toggle"><input id="updatePriceInventoryEnabled" type="checkbox"> 价格库存</label>
+                <label id="updatePriceInventoryDrop" class="module-file-drop" for="updatePriceInventoryInput" role="button" tabindex="0">
+                  <span id="updatePriceInventoryDropText">拖入价格库存文件夹或两份 Excel 文件</span>
+                  <input id="updatePriceInventoryInput" type="file" webkitdirectory multiple>
+                </label>
+                <button id="updatePriceInventoryClear" class="module-file-clear" type="button" title="清除价格库存材料" aria-label="清除价格库存材料" hidden>&times;</button>
+              </div>
+              <div class="module-material-row">
+                <label class="module-toggle"><input id="updateSkuImagesEnabled" type="checkbox"> SKU 图片</label>
+                <label id="updateSkuImagesDrop" class="module-file-drop" for="updateSkuImagesInput" role="button" tabindex="0">
+                  <span id="updateSkuImagesDropText">拖入 SKU 图片文件夹或点击选择</span>
+                  <input id="updateSkuImagesInput" type="file" webkitdirectory multiple accept="image/jpeg,image/png,image/webp">
+                </label>
+                <button id="updateSkuImagesClear" class="module-file-clear" type="button" title="清除 SKU 图片材料" aria-label="清除 SKU 图片材料" hidden>&times;</button>
+              </div>
+            </fieldset>
+            <fieldset class="update-scope" aria-label="替换执行范围">
+              <legend>执行范围</legend>
+              <label><input type="radio" name="updateReplaceScope" value="batch" checked> 当前商品分组与筛选结果（串行自动翻页）</label>
+              <label><input type="radio" name="updateReplaceScope" value="query"> 按商品名称 / 商品 ID / 商家编码查询</label>
+              <label><input type="radio" name="updateReplaceScope" value="current"> 仅当前商品编辑页</label>
+              <label id="updateProductQueryField" class="scope-query" for="updateProductQuery" hidden>
+                <span>商品查询</span>
+                <input id="updateProductQuery" type="search" placeholder="请输入商品名称/商品ID/商家编码，多条可用逗号隔开" autocomplete="off" disabled>
+              </label>
+              <a id="updateScopeLink" class="scope-link" href="https://fxg.jinritemai.com/ffa/g/list" target="_blank" rel="noreferrer">当前商品分组与筛选链接将在执行时锁定</a>
+            </fieldset>
+          </div>
+
+          <div id="washSortReminder" class="update-safety wash-sort-reminder" role="note" hidden>
+            <p><strong>自定义排序提醒</strong><span>洗链接完成后，请到商品编辑页右侧手动点击“自定义排序”，调整 SKU 顺序后手动保存。插件不会自动查找或点击排序。</span></p>
+          </div>
+
+          <section id="washReview" class="wash-review" hidden aria-live="polite">
+            <div class="wash-review-heading">
+              <h3 id="washReviewHeading">规格核实清单</h3>
+              <div id="washReviewFilters" class="wash-review-filters" role="group" aria-label="按核实结果筛选"></div>
+            </div>
+            <p id="washReviewSummary" class="wash-review-summary"></p>
+            <p id="washReviewHelp" class="wash-review-help">按页面当前顺序显示。点击上方分类按钮可只查看对应内容，再次点击可显示全部。</p>
+            <div id="washReviewList" class="wash-review-list"></div>
+            <div id="washReviewActions" class="wash-review-actions">
+              <button id="washModifyButton" class="primary-button wash-action-modify" type="button">修改已有 SKU</button>
+              <button id="washAddButton" class="secondary-button wash-action-add" type="button" title="将清单中的新增规格通过 Excel 智能识别导入当前商品">按 Excel 上架 SKU</button>
+            </div>
+          </section>
+
+          <div id="updateOffsalePanel" class="update-submode-panel" role="tabpanel" hidden>
+            <label class="field-label" for="updateOffsaleSpecifications">要下架的规格
+              <textarea id="updateOffsaleSpecifications" rows="7" placeholder="一个规格一行，按规格输入框内容精确匹配"></textarea>
+            </label>
+            <fieldset class="update-scope" aria-label="下架执行范围">
+              <legend>执行范围</legend>
+              <label><input type="radio" name="updateOffsaleScope" value="batch" checked> 当前筛选结果中的全部商品</label>
+              <label><input type="radio" name="updateOffsaleScope" value="current"> 仅当前商品编辑页</label>
+            </fieldset>
+            <div class="update-safety" role="note"><p><strong>规格下架风险</strong><span>只删除精确匹配的规格值，不保存、不发布。</span></p></div>
+          </div>
+
+          <div id="updateImageSwapPanel" class="update-submode-panel" role="tabpanel" hidden>
+            <label class="directory-row" for="updateImageSwapInput">
+              <span class="directory-copy"><strong>选择新的 SKU 图</strong><span id="updateImageSwapHint" class="hint">支持 JPG、JPEG、PNG、WebP；按 SKU 图命名规则匹配。</span></span>
+              <input id="updateImageSwapInput" type="file" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="updateImageSwapHint">
+            </label>
+            <fieldset class="update-scope" aria-label="换图执行范围">
+              <legend>执行范围</legend>
+              <label><input type="radio" name="updateImageSwapScope" value="batch" checked> 当前筛选结果中的全部商品</label>
+              <label><input type="radio" name="updateImageSwapScope" value="current"> 仅当前商品编辑页</label>
+            </fieldset>
+            <div class="update-safety" role="note"><p><strong>SKU 图替换范围</strong><span>有图时本地替换，无图时本地上传；故障编辑页会保留待检查。</span></p></div>
+          </div>
+
+          <div id="updateStats" class="update-stats" aria-live="polite" hidden></div>
+          <div id="updateResults" class="update-results" aria-live="polite"></div>
+          <details class="logs-section" id="updateLogsSection">
+            <summary>日志与证据</summary>
+            <pre id="updateReport" aria-live="polite">选择替换材料目录后开始预检。</pre>
+          </details>
+          <div class="update-actions">
+            <button id="updateDryRunButton" class="primary-button" type="button" disabled>确认并替换全部筛选商品</button>
+            <button id="updateContinueCurrentButton" class="secondary-button" type="button" hidden disabled>继续当前商品编辑页</button>
+            <button id="updateResumeButton" class="secondary-button" type="button" hidden disabled>恢复未完成任务</button>
+            <button id="updatePauseButton" class="secondary-button" type="button" disabled>暂停</button>
+          </div>
+        </section>
+      </main>
+    </div>
+    <dialog id="updateFailureDialog" class="failure-dialog" aria-labelledby="updateFailureTitle" aria-describedby="updateFailureMessage updateFailureAdvice">
+      <form method="dialog" class="failure-dialog-content">
+        <h2 id="updateFailureTitle">需要确认</h2>
+        <p id="updateFailureMessage"></p>
+        <p id="updateFailureAdvice" class="failure-dialog-advice"></p>
+        <menu class="failure-dialog-actions">
+          <button id="updateFailureStop" class="secondary-button" type="submit" value="stop">停止并检查当前商品</button>
+          <button id="updateFailureSkip" class="primary-button" type="submit" value="skip" hidden>跳过，继续后续商品</button>
+        </menu>
+      </form>
+    </dialog>
+    <script src="shared/build-info.js"></script>
+    <script src="vendor/read-excel-file.min.js"></script>
+    <script src="shared/preflight.js"></script>
+    <script src="shared/binary-payload.js"></script>
+    <script src="shared/workbook-plan.js"></script>
+    <script src="shared/sku-image-plan.js"></script>
+    <script src="shared/update-contract.js"></script>
+    <script src="update-ui.js"></script>
+  </body>
+</html>

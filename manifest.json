@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "抖店批量替换SKU",
+  "version": "1.0.87",
+  "description": "Safely manages Doudian SKU specifications, prices, inventory, and images for existing products.",
+  "minimum_chrome_version": "116",
+  "permissions": ["sidePanel", "scripting", "storage", "tabs"],
+  "host_permissions": ["https://fxg.jinritemai.com/*"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "打开抖店批量替换" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "content_scripts": [{
+    "matches": ["https://fxg.jinritemai.com/*"],
+    "js": [
+      "shared/build-info.js",
+      "shared/binary-payload.js",
+      "shared/upload-state.js",
+      "shared/media-contract.js",
+      "shared/sku-contract.js",
+      "shared/specification-xlsx.js",
+      "content-script.js",
+      "shared/update-contract.js",
+      "update-content-script.js"
+    ],
+    "run_at": "document_idle"
+  }],
+  "content_security_policy": { "extension_pages": "script-src 'self'; object-src 'self'" }
+}

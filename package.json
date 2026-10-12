@@ -1,0 +1,6 @@
+{
+  "name": "doudian-sku-replacement",
+  "version": "1.0.87",
+  "private": true,
+  "scripts": { "test": "node --test test/*.test.cjs", "validate": "node scripts/validate-extension.cjs" }
+}
